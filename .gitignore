@@ -1,2 +1,5 @@
-config.json
-__pycache__/*.pyc
+config*.json
+*.log
+*__pycache__/*.pyc
+jcore/__pycache__/*.pyc
+jcore/*/__pycache__/*.pyc
