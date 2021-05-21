@@ -1,12 +1,14 @@
 import asyncio
-import importlib
+from importlib import util
+from jcore.helpers.settings import Settings
 from jcore.message import *
 import jcore.exceptions
 import jcore.jsocket
+import jcore
 import logging
 import os
 import sys
-
+import traceback
 
 INTERVAL = 0.001
 
@@ -24,15 +26,14 @@ log = logging.getLogger(__name__)
 
 class Client():
 
-    def __init__(self, name:str, channels: list, max_connections: int = 50):
-        log.info(f"Starting new connection for `{name}` with a maximum of `{max_connections}` connections per socket.")
-        self.name = name
+    def __init__(self, max_connections: int = 50, command_activator: str = "!"):
+        log.info(f"Starting new connection with a maximum of `{max_connections}` connections per socket.")
         self.max_connections_per_socket = max_connections
         self.sockets = []
         self.__modules = {}
         self.loop = asyncio.get_event_loop()
-        for segment in self.__segment_channels(channels):
-            sock = jcore.jsocket.Socket(self)
+        for segment in self.__segment_channels(Settings().get_setting("channels")):
+            sock = jcore.jsocket.Socket(self, command_activator)
             sock.set_channels(segment)
             self.sockets.append(sock)
         self.__cache_modules()
@@ -50,124 +51,128 @@ class Client():
             log.debug("Keyboard Interrupt Detected - departing channels.")
             for sock in self.sockets:
                 sock.disconnect()
+
+    
+    def load_module(self, module):
+        self.__modules[module.name] = module
         
 
 
     # Callbacks: These can be overwritten to provide functionality in user-built apps.
 
     async def on_raw(self, message: RawMessage):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
     
     async def on_message(self, message: Message):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a message event is received."""
         # not implemented
         pass
     
     async def on_join(self, message: Join):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a JOIN event is received."""
         # not implemented
         pass
     
     async def on_mode(self, message: Mode):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a MODE event is received."""
         # not implemented
         pass
 
     async def on_names(self, message: Names):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a NAMES event is received."""
         # not implemented
         pass
         
     async def on_part(self, message: Part):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_clearchat(self, message: ClearChat):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_clearmessage(self, message: ClearMessage):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_hosttarget(self, message: HostTarget):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_notice(self, message: Notice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_reconnect(self, message: Reconnect):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
 
     async def on_roomstate(self, message: RoomState):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_userstate(self, message: UserState):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_globaluserstate(self, message: GlobalUserState):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_usernotice(self, message: UserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_ritual_usernotice(self, message: RitualUserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_bitbadgeupgrade_usernotice(self, message: BitBadgeUpgradeUserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_raid_usernotice(self, message: RaidUserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_whisper(self, message: Whisper):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_subscriber_usernotice(self, message: SubscriberUserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_giftedsubscriber_usernotice(self, message: GiftedSubscriberUserNotice):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
     
     async def on_privmessage(self, message: PrivateMessage):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
 
     async def on_command(self, message: CommandMessage):
-        """Called when a raw message event is recieved. Triggers in all cases."""
+        """Called when a raw message event is received. Triggers in all cases."""
         # not implemented
         pass
     
@@ -180,7 +185,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_raw(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_raw(message))
     
@@ -191,7 +196,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_message(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_message(message))
 
@@ -202,7 +207,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_join(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_join(message))
 
@@ -213,7 +218,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_mode(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_mode(message))
 
@@ -223,7 +228,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_names(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_names(message))
 
@@ -233,7 +238,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_part(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_part(message))
 
@@ -243,7 +248,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_clearchat(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_clearchat(message))
 
@@ -253,7 +258,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_clearmessage(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_clearmessage(message))
 
@@ -263,7 +268,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_hosttarget(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_hosttarget(message))
 
@@ -273,7 +278,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_notice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_notice(message))
 
@@ -283,7 +288,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_reconnect(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_reconnect(message))
 
@@ -293,7 +298,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_roomstate(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_roomstate(message))
 
@@ -303,7 +308,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_userstate(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_userstate(message))
 
@@ -313,7 +318,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_global_userstate(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_global_userstate(message))
 
@@ -323,7 +328,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_usernotice(message))
 
@@ -333,7 +338,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_ritual_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_ritual_usernotice(message))
 
@@ -343,7 +348,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_bitbadgeupgrade_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_bitbadgeupgrade_usernotice(message))
 
@@ -353,7 +358,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_raid_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_raid_usernotice(message))
 
@@ -363,7 +368,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_whisper(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_whisper(message))
 
@@ -373,7 +378,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_subscriber_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_subscriber_usernotice(message))
 
@@ -383,7 +388,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_giftedsubscriber_usernotice(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_giftedsubscriber_usernotice(message))
 
@@ -393,7 +398,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_privmessage(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_privmessage(message))
 
@@ -403,7 +408,7 @@ class Client():
             try:
                 self.loop.create_task(module.on_command(message))
             except Exception as e:
-                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {sys.tracebacklimit.format_exc()}")
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
         # call local callback
         self.loop.create_task(self.on_command(message))
 
@@ -429,32 +434,33 @@ class Client():
 
     def __cache_modules(self):
         modules = []
-        if not os.path.exists("modules/"):
-            return
-        for _file in os.listdir(os.path.join(os.path.dirname(__file__), 'modules/')):
-            if "__" not in _file:
-                # print ("r1: Found: ", _file)
-                filename, ext = os.path.splitext(_file)
-                if '.py' in ext:
-                    modules.append(f'jcore.modules.{filename}')
+        if os.path.exists(os.path.join(os.path.dirname(__file__), 'modules/')):
+            log.debug("Loading core modules")
+            for _file in os.listdir(os.path.join(os.path.dirname(__file__), 'modules/')):
+                if "__" not in _file:
+                    # print ("r1: Found: ", _file)
+                    filename, ext = os.path.splitext(_file)
+                    if '.py' in ext:
+                        modules.append(f'jcore.modules.{filename}')
         
         if os.path.exists("modules/"):
-            print("Loading custom modules")
+            log.info("Loading custom modules")
             for _file in os.listdir('modules/'):
                 if "__" not in _file:
-                    print ("Found: ", _file)
+                    log.debug(f"Found: {_file}")
                     filename, ext = os.path.splitext(_file)
                     if '.py' in ext:
+                        log.info(f"Loaded custom module `{_file}`")
                         modules.append(f'modules.{filename}')
         
-        if os.path.exists("bots/modules/"):
-            print("Loading custom modules")
-            for _file in os.listdir('bots/modules/'):
-                if "__" not in _file:
-                    print ("Found: ", _file)
-                    filename, ext = os.path.splitext(_file)
-                    if '.py' in ext:
-                        modules.append(f'modules.{filename}')
+        # if os.path.exists("bots/modules/"):
+        #     log.debug("Loading custom modules")
+        #     for _file in os.listdir('bots/modules/'):
+        #         if "__" not in _file:
+        #             print ("Found: ", _file)
+        #             filename, ext = os.path.splitext(_file)
+        #             if '.py' in ext:
+        #                 modules.append(f'modules.{filename}')
 
         for extension in reversed(modules):
             try:
@@ -462,26 +468,26 @@ class Client():
             except Exception as e:
                 try:
                     # extension = extension.replace("jcore", "JarvisCore")
-                    print("re-attempting to load: ", extension)
+                    log.warn("module load failed, re-attempting to load: ", extension)
                     self._load_module(f'{extension}')
                 except Exception as e:
                     exc = f'{type(e).__name__}: {e}'
-                    print(f'Failed to load extension {extension}\n{exc}')
+                    log.error(f'Failed to load extension {extension}\n{exc}')
         
 
-    def _load_module(self, name):
-        if name in self.__modules:
-            raise jcore.exceptions.ExtensionAlreadyLoaded(name)
+    def _load_module(self, module):
+        if module in self.__modules:
+            raise jcore.exceptions.ExtensionAlreadyLoaded(module)
 
-        spec = importlib.util.find_spec(name)
+        spec = util.find_spec(module)
         if spec is None:
-            raise jcore.exceptions.ExtensionNotFound(name)
+            raise jcore.exceptions.ExtensionNotFound(module)
 
-        self._load_from_module_spec(spec, name)
+        self._load_from_module_spec(spec, module)
 
     
     def _load_from_module_spec(self, spec, key):
-        lib = importlib.util.module_from_spec(spec)
+        lib = util.module_from_spec(spec)
         sys.modules[key] = lib
         try:
             spec.loader.exec_module(lib)

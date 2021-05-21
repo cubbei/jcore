@@ -2,8 +2,7 @@ from .message import *
 from datetime import datetime
 import re
 
-
-def parse_line(line: str) -> RawMessage:
+def parse_line(line: str, command_activator: str) -> RawMessage:
     """Parse a raw line coming in and return a Message Object"""
     
     pattern = re.compile(":[a-z0-9_]+![a-z0-9_]+@[a-z0-9_]+.tmi.twitch.tv JOIN #")
@@ -25,7 +24,7 @@ def parse_line(line: str) -> RawMessage:
 
     pattern = re.compile(":[a-z0-9_]+![a-z0-9_]+@[a-z0-9_]+.tmi.twitch.tv PRIVMSG")
     if pattern.search(line): #Private Message
-        return __parse_privatemessage(line)
+        return __parse_privatemessage(line, command_activator)
     
     pattern = re.compile(":tmi.twitch.tv CLEARCHAT")
     if pattern.search(line): #Clear Chat
@@ -201,9 +200,9 @@ def __parse_clearchat(line: str) -> ClearChat:
     return msg
 
 
-def __parse_privatemessage(line: str) -> PrivateMessage:
+def __parse_privatemessage(line: str, command_activator: str) -> PrivateMessage:
     t = __get_message(line, "PRIVMSG")
-    if t[0] == "!":
+    if t[0] == command_activator:
         msg = CommandMessage()
         msg.args = t[1:].lower().split(" ")
         msg.KEYWORD = msg.args[0].strip("\"\'\\")
@@ -258,6 +257,7 @@ def __parse_join(line: str) -> Join:
     msg = Join()
     msg.message_time = datetime.now()
     msg.line = line
+    msg.channel = line.split("#")[1].strip()
     try:
         msg.user = line.split(":")[1].split("!")[0]
     except:
@@ -268,6 +268,7 @@ def __parse_part(line: str) -> Join:
     msg = Part()
     msg.message_time = datetime.now()
     msg.line = line
+    msg.channel = line.split("#")[1].strip()
     try:
         msg.user = line.split(":")[1].split("!")[0]
     except:

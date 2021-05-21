@@ -108,7 +108,17 @@ class Join(RawMessage):
     pass
 
     def __repr__(self):
-        return f"[{self.inner}]: {self.user} joined => {self.line}"
+        return f"[{self.inner}]: `{self.user}` joined channel: `{self.channel}` => {self.line}"
+
+    async def send(self, message_text: str):
+        """Send a message to the chat"""
+        await self._send(message_text)
+
+    async def send_action(self, message_text: str):
+        """Send an 'action' message to the chat"""
+        await self._send_action(message_text)
+
+    
 
 class Mode(RawMessage):
     inner:str = "Mode"
@@ -124,7 +134,15 @@ class Part(RawMessage):
     pass
 
     def __repr__(self):
-        return f"[{self.inner}]: {self.user} departed => {self.line}"
+        return f"[{self.inner}]: `{self.user}` departed channel: `{self.channel}` => {self.line}"
+
+    async def send(self, message_text: str):
+        """Send a message to the chat"""
+        await self._send(message_text)
+
+    async def send_action(self, message_text: str):
+        """Send an 'action' message to the chat"""
+        await self._send_action(message_text)
 
 
 class Whisper(RawMessage):

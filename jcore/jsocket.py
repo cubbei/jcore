@@ -18,14 +18,13 @@ class Socket():
     """A wrapper for the low-level core library socket interface, 
     and customised to facilitate communication with the Twitch IRC API."""
 
-    def __init__(self, client, verbose: bool = True):
+    def __init__(self, client, command_activator: str):
+        self.client = client
+        self.command_activator = command_activator
         self.identifier = uuid.uuid4().hex[:8]
         self.active = True
-        self.client = client
         self.__channels = []
-        # self.__channels = client.channels
         self.buffer = ""
-        self.verbose = verbose
         self.socket = None
         config = Settings().get_all_settings()
         self.nick = config["nick"]
@@ -55,8 +54,7 @@ class Socket():
 
     async def disconnect(self):
         try:
-            if self.verbose:
-                log.info(f"[{self.identifier}]: departing channels")
+            log.info(f"[{self.identifier}]: departing channels")
             try:
                 tasks = []
                 for channel in self.__channels:
@@ -72,11 +70,9 @@ class Socket():
             log.critical(f"[{self.identifier}]: Failed to correctly disconnect from channel")
 
     async def reconnect(self):
-        if self.verbose:
-            log.info(f"[{self.identifier}]: Reconnect detected!")
+        log.info(f"[{self.identifier}]: Reconnect detected!")
         await self.disconnect()
-        if self.verbose:
-            log.info(f"[{self.identifier}]: Waiting to reconnect.")
+        log.info(f"[{self.identifier}]: Waiting to reconnect.")
         await asyncio.sleep(10)
         await self.connect()
 
@@ -88,11 +84,10 @@ class Socket():
 
     async def _send_raw(self, message: str):
         try:
-            if self.verbose:
-                if message[:4] == "PASS":
-                    log.debug(f"[{self.identifier}]:  < PASS ****")
-                else:
-                    log.debug(f"[{self.identifier}]:  < {message}")
+            if message[:4] == "PASS":
+                log.debug(f"[{self.identifier}]:  < PASS ****")
+            else:
+                log.debug(f"[{self.identifier}]:  < {message}")
             self.socket.send((f"{message}\r\n").encode('utf-8'))
             await asyncio.sleep(INTERVAL)
         except OSError:
@@ -102,7 +97,6 @@ class Socket():
     async def run(self):
         try:
             while self.active:
-                
                 await self.__process_stream_message()
             try:
                 self.socket.close()
@@ -133,7 +127,7 @@ class Socket():
         temp = self.buffer.split("\n")
         self.buffer = temp.pop()
         for line in temp:
-            log.debug(f"[{self.identifier}]:  > {line}")
+            log.debug(f"[{self.identifier}]:  > {line.strip()}")
             if ("PING :tmi.twitch.tv" in line): # Keep Alive Mechanism
                 await self._send_raw("PONG :tmi.twitch.tv")
                 self.last_ping = datetime.now()
@@ -142,7 +136,7 @@ class Socket():
             self.loop.create_task(self.__process_line(line))
 
     async def __process_line(self, line_text):
-        message = parse_line(line_text)
+        message = parse_line(line_text, self.command_activator)
         message.set_socket(self)
         self.loop.create_task(self.client._scb_on_raw(message))
 

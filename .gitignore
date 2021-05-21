@@ -1,5 +1,7 @@
+.vscode
+__pycache__
+/modules
+jasync
 config*.json
+test.py
 *.log
-*__pycache__/*.pyc
-jcore/__pycache__/*.pyc
-jcore/*/__pycache__/*.pyc
