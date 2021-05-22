@@ -21,10 +21,10 @@ To install using this repository:
 To create a simple bot, start by creating a new python file called `simple_bot.py` and copy the code below into the file.
 ```python
 import asyncio
-import jcore.client
+import jcore
 from jcore.message import CommandMessage
 
-class SimpleBot(jcore.client.Client):
+class SimpleBot(jcore.Client):
 
     async def on_command(self, message: CommandMessage):
         if message.KEYWORD == "hi":
@@ -69,7 +69,7 @@ py simple_bot.py
 If you need to view the logging output of from the framework for your bot, you can configure logging by adding the logging import to the top of your file:
 ```python
 import asyncio
-import jcore.client
+import jcore
 from jcore.message import CommandMessage
 import logging
 ```

@@ -1,10 +1,10 @@
 import asyncio
 import logging
-import jcore.client
+import jcore
 from jcore.message import CommandMessage
 
 
-class SimpleBot(jcore.client.Client):
+class SimpleBot(jcore.Client):
 
     async def on_command(self, message: CommandMessage):
         if message.KEYWORD == "hi":
