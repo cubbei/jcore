@@ -33,8 +33,11 @@ class Client():
         self.__modules = {}
         
         # pull channels from settings file.
-        channel_list = list(Settings().get_setting("channels"))
-        
+        settings = Settings()
+        if settings.has_key("channels"):
+            channel_list = list(settings.get_setting("channels"))
+        else:
+            channel_list = []
         # if channel is set, attempt to add it to the channels list.
         if channel is not None and channel not in channel_list:
             channel_list.append(channel)
