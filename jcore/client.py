@@ -487,7 +487,7 @@ class Client():
                         modules.append(f'modules.{filename}')
         
         if os.path.exists("bots/twitch/modules/"):
-            log.debug("Loading custom modules")
+            log.debug("Loading custom jarvis modules")
             for _file in os.listdir('bots/twitch/modules/'):
                 if "__" not in _file:
                     print ("Found: ", _file)
