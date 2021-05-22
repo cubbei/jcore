@@ -490,7 +490,7 @@ class Client():
             log.debug("Loading custom jarvis modules")
             for _file in os.listdir('bots/twitch/modules/'):
                 if "__" not in _file:
-                    print ("Found: ", _file)
+                    log.debug(f"Found jarvis module: {_file}")
                     filename, ext = os.path.splitext(_file)
                     if '.py' in ext:
                         modules.append(f'bots.twitch.modules.{filename}')
