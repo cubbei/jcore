@@ -493,7 +493,7 @@ class Client():
                     print ("Found: ", _file)
                     filename, ext = os.path.splitext(_file)
                     if '.py' in ext:
-                        modules.append(f'modules.{filename}')
+                        modules.append(f'bots.twitch.modules.{filename}')
 
         for extension in reversed(modules):
             try:
