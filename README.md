@@ -88,5 +88,8 @@ if __name__ == "__main__":
 
 For more information on using the logging library, refer to the [python logging documentation](https://docs.python.org/3/library/logging.html).
 
+### Examples
+These examples above and more can be found in the [examples](https://dev.azure.com/cubbei/JCore/_git/jcore?path=%2Fexamples) folder. 
+
 ### Support
 If you require any further support, please join the [discord](https://jarvis.bot/discord) and seek help from the commuity. 

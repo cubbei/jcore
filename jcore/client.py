@@ -26,13 +26,27 @@ log = logging.getLogger(__name__)
 
 class Client():
 
-    def __init__(self, max_connections: int = 50, command_activator: str = "!"):
+    def __init__(self, channel:str = None, channels:list = None, max_connections: int = 50, command_activator: str = "!"):
         log.info(f"Starting new connection with a maximum of `{max_connections}` connections per socket.")
         self.max_connections_per_socket = max_connections
         self.sockets = []
         self.__modules = {}
+        
+        # pull channels from settings file.
+        channel_list = list(Settings().get_setting("channels"))
+        
+        # if channel is set, attempt to add it to the channels list.
+        if channel is not None and channel not in channel_list:
+            channel_list.append(channel)
+        
+        # if channels is set, attempt to add new channels to the list.
+        if channels is not None:
+            for chn in channels:
+                if chn not in channel_list:
+                    channel_list.append(chn)
+        
         self.loop = asyncio.get_event_loop()
-        for segment in self.__segment_channels(Settings().get_setting("channels")):
+        for segment in self.__segment_channels(channel_list):
             sock = jcore.jsocket.Socket(self, command_activator)
             sock.set_channels(segment)
             self.sockets.append(sock)
@@ -55,6 +69,22 @@ class Client():
     
     def load_module(self, module):
         self.__modules[module.name] = module
+
+
+    async def join_channel(self, channel):
+        socket: jcore.jsocket.Socket
+        for socket in self.sockets:
+            if socket.has_channel(channel):
+                raise jcore.exceptions.ClientException("Channel has already been joined.")
+        for socket in self.sockets:
+            if socket.current_connections < (self.max_connections_per_socket * 0.9):
+                await socket.join_channel(channel)
+
+    async def depart_channel(self, channel):
+        socket: jcore.jsocket.Socket
+        for socket in self.sockets:
+            if socket.has_channel(channel):
+                await socket.depart_channel(channel)
         
 
 

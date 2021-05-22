@@ -66,3 +66,6 @@ class NoChannelsSet(JarvisException):
 
 class DBConnectionUndefined(JarvisException):
     pass
+
+class ClientException(JarvisException):
+    pass

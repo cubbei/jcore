@@ -2,6 +2,9 @@
 __pycache__
 /modules
 jasync
+build
+dist
 config*.json
 test.py
 *.log
+jcore.egg*
