@@ -486,14 +486,14 @@ class Client():
                         log.info(f"Loaded custom module `{_file}`")
                         modules.append(f'modules.{filename}')
         
-        # if os.path.exists("bots/modules/"):
-        #     log.debug("Loading custom modules")
-        #     for _file in os.listdir('bots/modules/'):
-        #         if "__" not in _file:
-        #             print ("Found: ", _file)
-        #             filename, ext = os.path.splitext(_file)
-        #             if '.py' in ext:
-        #                 modules.append(f'modules.{filename}')
+        if os.path.exists("bots/twitch/modules/"):
+            log.debug("Loading custom modules")
+            for _file in os.listdir('bots/twitch/modules/'):
+                if "__" not in _file:
+                    print ("Found: ", _file)
+                    filename, ext = os.path.splitext(_file)
+                    if '.py' in ext:
+                        modules.append(f'modules.bots.{filename}')
 
         for extension in reversed(modules):
             try:
