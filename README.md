@@ -3,7 +3,7 @@
 [![Build status](https://dev.azure.com/cubbei/JCore/_apis/build/status/Publish%20jcore)](https://dev.azure.com/cubbei/JCore/_build/latest?definitionId=7) | [![PyPI version](https://badge.fury.io/py/jcore@2x.svg)](https://badge.fury.io/py/jcore)
 
 This framework is a simple wrapper for creating [Twitch](https://twitch.tv) bots using Python. 
-The [Jarvis chatbot for twitch and discord](https://jarvis.bot) is build using the J-Core framework for it's Twitch components. 
+The [Jarvis chatbot for twitch and discord](https://jarvis.bot) has been built using the J-Core framework for it's Twitch components. 
 
 A full set of documentation is still being developed, however, a getting started guide is outlined below.
 
