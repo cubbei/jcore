@@ -69,3 +69,23 @@ class DBConnectionUndefined(JarvisException):
 
 class ClientException(JarvisException):
     pass
+
+class ModelException(JarvisException):
+    pass
+
+class CommandException(ModelException):
+    pass
+
+class CommandNotFoundException(CommandException):
+    pass
+
+class CommandNotCreatedException(CommandException):
+    pass
+
+class CommandNotDeletedException(CommandException):
+    pass
+
+class CommandNotDeletedException(CommandException):
+    pass
+
+

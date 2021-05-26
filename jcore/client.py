@@ -28,6 +28,7 @@ class Client():
 
     def __init__(self, channel:str = None, channels:list = None, max_connections: int = 50, command_activator: str = "!"):
         log.info(f"Starting new connection with a maximum of `{max_connections}` connections per socket.")
+        self.command_activator = command_activator
         self.max_connections_per_socket = max_connections
         self.sockets = []
         self.__modules = {}
