@@ -22,17 +22,6 @@ class ConfigFileNotFound(SettingException):
     Exception raised when the config file passed, nor the file backup locations cannot be found.
     """
     pass
-
-class HTTPDriverException(JarvisException):
-    """
-    Exception raised in the HTTPClient.
-    """
-    pass
-
-class HTTPDriverNotConfigured(HTTPDriverException):
-    """
-    Exception raised when the parameters passed to the HTTP Client are invalid.
-    """
     
     
 class MissingRequiredParameterException(JarvisException):
@@ -82,10 +71,29 @@ class CommandNotFoundException(CommandException):
 class CommandNotCreatedException(CommandException):
     pass
 
-class CommandNotDeletedException(CommandException):
+class CommandAlreadyExistsException(CommandNotCreatedException):
+    pass
+
+class CommandNotUpdatedException(CommandException):
     pass
 
 class CommandNotDeletedException(CommandException):
     pass
+
+class DBSettingException(ModelException):
+    pass
+
+class DBSettingNotFoundException(DBSettingException):
+    pass
+
+class DBSettingNotCreatedException(DBSettingException):
+    pass
+
+class DBSettingNotUpdatedException(DBSettingException):
+    pass
+
+class DBSettingNotDeletedException(DBSettingException):
+    pass
+
 
 

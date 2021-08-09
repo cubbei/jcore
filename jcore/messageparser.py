@@ -233,7 +233,7 @@ def __parse_roomstate(line: str) -> RoomState:
     msg = RoomState()
     msg.line = line
     msg.message_time = datetime.now()
-    msg.channel = line.split("ROOMSTATE #", 1)[1]
+    msg.channel = line.split("ROOMSTATE #", 1)[1].replace("\r","")
     msg.emote_only = "1" == __get_single(line, "emote-only")
     msg.follower_only = __get_single_int(line, "followers-only", default = -1) > -1
     msg.r9k = "1" == __get_single(line, "r9k")
@@ -257,7 +257,7 @@ def __parse_join(line: str) -> Join:
     msg = Join()
     msg.message_time = datetime.now()
     msg.line = line
-    msg.channel = line.split("#")[1].strip()
+    msg.channel = __get_channel(line, "JOIN")
     try:
         msg.user = line.split(":")[1].split("!")[0]
     except:
@@ -306,7 +306,7 @@ def __get_list(line: str, key:str) -> list:
 
 def __get_channel(line: str, key: str) -> str:
     try:
-        l = line.split(f"{key} #", 1)[1]
+        l = line.split(f"{key} #", 1)[1].replace("\\r", "").strip()
         try:
             return l.split(" ", 1)[0]
         except IndexError:

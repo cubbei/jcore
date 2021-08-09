@@ -11,6 +11,8 @@ import sys
 import traceback
 
 INTERVAL = 0.001
+INTERVAL_LOAD_BALANCE = 20
+
 
 log = logging.getLogger(__name__)
 
@@ -26,12 +28,14 @@ log = logging.getLogger(__name__)
 
 class Client():
 
-    def __init__(self, channel:str = None, channels:list = None, max_connections: int = 50, command_activator: str = "!"):
-        log.info(f"Starting new connection with a maximum of `{max_connections}` connections per socket.")
+    def __init__(self, channel:str = None, channels:list = None, max_connections: int = 50, command_activator: str = "!", load_ratio:float = 3):
+        log.info(f"Starting new connection with: max connections per socket `{max_connections}` | command activator set to `{command_activator}` | load balance ratio set to `{load_ratio}`")
         self.command_activator = command_activator
         self.max_connections_per_socket = max_connections
         self.sockets = []
         self.__modules = {}
+        self.__last_load_check = datetime.now()
+        self.load_ratio = load_ratio
         
         # pull channels from settings file.
         settings = Settings()
@@ -51,9 +55,7 @@ class Client():
         
         self.loop = asyncio.get_event_loop()
         for segment in self.__segment_channels(channel_list):
-            sock = jcore.jsocket.Socket(self, command_activator)
-            sock.set_channels(segment)
-            self.sockets.append(sock)
+            self.append_new_socket(segment)
         self.__cache_modules()
 
     async def run(self):
@@ -61,18 +63,71 @@ class Client():
             loop = asyncio.get_event_loop()
             for sock in self.sockets:
                 await sock.connect()
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(INTERVAL)
                 loop.create_task(sock.run())
             while True:
-                await asyncio.sleep(INTERVAL)
+                await asyncio.sleep(INTERVAL)                
+                if (datetime.now() - self.__last_load_check).seconds > INTERVAL_LOAD_BALANCE:
+                    self.__last_load_check = datetime.now()
+                    loop.create_task(self.check_load_balance())
         except KeyboardInterrupt:
             log.debug("Keyboard Interrupt Detected - departing channels.")
             for sock in self.sockets:
                 sock.disconnect()
 
+    def append_new_socket(self, channel_list:list):
+        sock = jcore.jsocket.Socket(self, self.command_activator)
+        sock.set_channels(channel_list)
+        self.sockets.append(sock)
+        return sock
+
+    async def remove_socket_and_close(self, socket):
+        await socket.disconnect()
+        self.sockets.remove(socket)
     
     def load_module(self, module):
         self.__modules[module.name] = module
+
+
+    async def check_load_balance(self):
+        # log.debug(f"Load balancing ({len(self.sockets)}) sockets. Load-ratio: '{self.load_ratio}'")
+        for sock in self.sockets:
+            time_span = datetime.now() - sock.last_check
+            if time_span.seconds == 0:
+                continue
+            # log.debug(f"Testing Socket: '{sock.name}' standby...")
+            total = 0
+            largest_channel = 0
+            largest_channel_name = None
+            for channel, messages in sock.message_counter.items():
+                # log.debug(f"Channel: {channel} - {messages}")
+                if messages > largest_channel or largest_channel == 0:
+                    largest_channel = messages
+                    largest_channel_name = channel
+                total += messages
+            ratio = total/time_span.seconds
+            # log.debug(f"Socket [{sock.name}]: Largest Channel - {largest_channel_name} ({largest_channel}) | ratio: {ratio}")
+
+            if ratio > self.load_ratio and sock.current_connections > 1:
+                log.info(f"Socket [{sock.name}] LB: Splitting out noisy channel - {largest_channel_name}")
+                new_sock = self.append_new_socket([largest_channel_name])
+                await new_sock.connect()
+                loop = asyncio.get_event_loop()
+                loop.create_task(new_sock.run())
+                await sock.depart_channel(largest_channel_name)
+            elif ratio == 0 and sock.current_connections == 1:
+                log.info(f"Socket [{sock.name}] LB: consolidating socket")
+                await self.remove_socket_and_close(sock)
+                await self.join_channel(largest_channel_name)
+            sock.reset_message_counter()
+            await asyncio.sleep(INTERVAL)
+
+                
+
+
+
+
+    
 
 
     async def join_channel(self, channel):
@@ -83,6 +138,9 @@ class Client():
         for socket in self.sockets:
             if socket.current_connections < (self.max_connections_per_socket * 0.9):
                 await socket.join_channel(channel)
+                return
+        
+        
 
     async def depart_channel(self, channel):
         socket: jcore.jsocket.Socket
@@ -457,7 +515,7 @@ class Client():
         counter = 0
         for channel in channels:
             if counter < self.max_connections_per_socket:
-                return_list.append(channel)
+                return_list.append(channel.lower())
                 counter +=1 
             else:
                 counter = 0
