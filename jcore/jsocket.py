@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
 from jcore.exceptions import JarvisException
 import socket
 import traceback
@@ -9,6 +10,8 @@ import logging
 from datetime import datetime
 from jcore.helpers import Settings
 from .messageparser import parse_line
+
+executor = ProcessPoolExecutor(2)
 
 
 INTERVAL = 0.001
@@ -63,7 +66,7 @@ class Socket():
             raise Exception("Channels list hasn't been set.")
         self.log.info(f"Initialising connection to: {self.__channels}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("irc.chat.twitch.tv", 6667))
+        await self.loop.run_in_executor(executor, self.socket.connect, ("irc.chat.twitch.tv", 6667))
         await self._send_raw(f"PASS {self.token}")
         await self._send_raw(f"NICK {self.nick}")
         await self._send_raw("CAP REQ :twitch.tv/membership")
