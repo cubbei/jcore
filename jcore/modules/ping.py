@@ -21,6 +21,7 @@ class Ping(Module):
                 await message.send("pong...")
             elif "peanut" == message.KEYWORD:
                 await message.send("butter! Kappa")
+                
 
 
 def setup(client: jcore.Client):

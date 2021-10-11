@@ -13,6 +13,7 @@ class Creator(Module):
     async def on_join(self, message: Join):
         if "cubbei" == message.user and (datetime.now() - self.launchTime).seconds > 60:
             await message.send_action("bows to the creator")
+            
 
 
 
