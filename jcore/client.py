@@ -54,9 +54,16 @@ class Client():
                     channel_list.append(chn)
         
         self.loop = asyncio.get_event_loop()
+        self.loop.set_exception_handler(self.handle_exception)
         for segment in self.__segment_channels(channel_list):
             self.append_new_socket(segment)
         self.__cache_modules()
+
+    def handle_exception(self, loop, context):
+        # print(context)
+        # context["message"] will always be there; but context["exception"] may not
+        msg = context.get("exception", context["message"])
+        log.error(f"Caught exception: {msg}")
 
     async def run(self):
         try:

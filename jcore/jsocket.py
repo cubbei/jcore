@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
 from jcore.exceptions import JarvisException
 import socket
 import traceback
@@ -9,6 +10,8 @@ import logging
 from datetime import datetime
 from jcore.helpers import Settings
 from .messageparser import parse_line
+
+executor = ProcessPoolExecutor(2)
 
 
 INTERVAL = 0.001
@@ -63,7 +66,7 @@ class Socket():
             raise Exception("Channels list hasn't been set.")
         self.log.info(f"Initialising connection to: {self.__channels}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("irc.chat.twitch.tv", 6667))
+        await self.loop.run_in_executor(executor, self.socket.connect, ("irc.chat.twitch.tv", 6667))
         await self._send_raw(f"PASS {self.token}")
         await self._send_raw(f"NICK {self.nick}")
         await self._send_raw("CAP REQ :twitch.tv/membership")
@@ -96,7 +99,6 @@ class Socket():
         
 
     async def reconnect(self):
-        await asyncio.sleep(INTERVAL)
         self.log.info(f"Reconnect detected!")
         await self.disconnect()
         self.log.info(f"Waiting to reconnect.")
@@ -116,7 +118,6 @@ class Socket():
             self.__channels.append(channel)
             self.__message_counter[channel] = 0
             await self._join(channel)
-            await asyncio.sleep(INTERVAL)
         except JarvisException as ex:
             self.log.error(f"An error occurred when attemting to leave the channel `{channel}`\nDetails below\n{type(ex)}: {traceback.format_exc()}")
             return
@@ -204,8 +205,8 @@ class Socket():
                 await self._send_raw("PONG :tmi.twitch.tv")
                 self.last_ping = datetime.now()
                 continue
-            await asyncio.sleep(INTERVAL)
             self.loop.create_task(self.__process_line(line))
+            await asyncio.sleep(INTERVAL)
 
     async def __process_line(self, line_text):
         message = parse_line(line_text, self.command_activator)
@@ -275,5 +276,4 @@ class Socket():
                 self.loop.create_task(self.client._scb_on_command(message))
             self.__message_counter[message.channel] += 1
         await asyncio.sleep(INTERVAL)
-
         
