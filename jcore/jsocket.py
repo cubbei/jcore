@@ -96,6 +96,7 @@ class Socket():
         
 
     async def reconnect(self):
+        await asyncio.sleep(INTERVAL)
         self.log.info(f"Reconnect detected!")
         await self.disconnect()
         self.log.info(f"Waiting to reconnect.")
@@ -115,6 +116,7 @@ class Socket():
             self.__channels.append(channel)
             self.__message_counter[channel] = 0
             await self._join(channel)
+            await asyncio.sleep(INTERVAL)
         except JarvisException as ex:
             self.log.error(f"An error occurred when attemting to leave the channel `{channel}`\nDetails below\n{type(ex)}: {traceback.format_exc()}")
             return
@@ -272,5 +274,6 @@ class Socket():
                 self.log.info(f"[CMD].[{message.channel}]: ({message.display_name}) {message.message_text}")
                 self.loop.create_task(self.client._scb_on_command(message))
             self.__message_counter[message.channel] += 1
+        await asyncio.sleep(INTERVAL)
 
         
