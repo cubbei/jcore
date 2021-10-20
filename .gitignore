@@ -1,6 +1,6 @@
 .vscode
 __pycache__
-/modules
+
 jasync
 build
 dist
@@ -8,3 +8,4 @@ config*.json
 test.py
 *.log
 jcore.egg*
+modules/ping.py
