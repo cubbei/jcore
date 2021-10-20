@@ -1,7 +1,8 @@
 import asyncio
+from asyncio import StreamReader, StreamWriter
 from concurrent.futures import ProcessPoolExecutor
 from jcore.exceptions import JarvisException
-import socket
+#import socket
 import traceback
 import uuid
 import logging
@@ -23,6 +24,8 @@ class Socket():
     __message_counter:dict
     last_check:datetime
     log:logging
+    reader: StreamReader
+    writer: StreamWriter
 
     def __init__(self, client, command_activator: str):
         self.__name = uuid.uuid4().hex[:8]
@@ -32,7 +35,7 @@ class Socket():
         self.active = True
         self.__channels = []
         self.buffer = ""
-        self.socket = None
+        # self.socket = None
         config = Settings().get_all_settings()
         self.nick = config["nick"]
         self.token = config["token"]
@@ -65,8 +68,10 @@ class Socket():
         if len(self.__channels) == 0: 
             raise Exception("Channels list hasn't been set.")
         self.log.info(f"Initialising connection to: {self.__channels}")
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        await self.loop.run_in_executor(executor, self.socket.connect, ("irc.chat.twitch.tv", 6667))
+        # self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.reader,self.writer = await asyncio.open_connection(host="irc.chat.twitch.tv", port=6667)
+        
+        # await self.loop.run_in_executor(executor, self.socket.connect, ("irc.chat.twitch.tv", 6667))
         await self._send_raw(f"PASS {self.token}")
         await self._send_raw(f"NICK {self.nick}")
         await self._send_raw("CAP REQ :twitch.tv/membership")
@@ -91,7 +96,8 @@ class Socket():
             except Exception as e:
                 self.log.critical(f"Suppressing a caught an exception in `Socket.disconnect()` [Parting channel]. Details below\n{type(e)}: {traceback.format_exc()}")
             try:
-                self.socket.close()
+                self.writer.close()
+                # self.socket.close()
             except Exception as e:
                 self.log.critical(f"Suppressing a caught an exception in `Socket.disconnect()` [closing socket]. Details below\n{type(e)}: {traceback.format_exc()}")
         except Exception:
@@ -157,7 +163,8 @@ class Socket():
                 self.log.debug(f" < PASS ****")
             else:
                 self.log.debug(f" < {message}")
-            self.socket.send((f"{message}\r\n").encode('utf-8'))
+            self.writer.write((f"{message}\r\n").encode('utf-8'))
+            # self.socket.send((f"{message}\r\n").encode('utf-8'))
             await asyncio.sleep(INTERVAL)
         except OSError:
             self.log.critical(f"Socket is closed and must be reopened to send the message '{message}'")
@@ -168,12 +175,14 @@ class Socket():
             while self.active:
                 await self.__process_stream_message()
             try:
-                self.socket.close()
+                self.writer.close()
+                # self.socket.close()
             except Exception as e:
                 self.log.critical(f"Suppressing a caught an exception while attempting to close the socket in `Socket.run()`. Details below\n{type(e)}: {traceback.format_exc()}")
         finally: 
             self.log.info(f"Closing socket.")
-            if (self.socket):
+            if (self.writer):
+                # if (self.socket):
                 await self.disconnect()
 
 
@@ -183,7 +192,8 @@ class Socket():
         if not self.active:
             return
         try:
-            self.buffer = self.buffer + (await self.loop.sock_recv(self.socket, 1024)).decode()
+            self.buffer += (await self.reader.readline()).decode()
+            # self.buffer = self.buffer + (await self.loop.sock_recv(self.socket, 1024)).decode()
         except ConnectionAbortedError:
             self.log.info(f"Socket connection has Closed")
             if self.active:
