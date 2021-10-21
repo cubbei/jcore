@@ -68,10 +68,17 @@ class Client():
     async def run(self):
         try:
             loop = asyncio.get_event_loop()
+            first = True
             for sock in self.sockets:
+                if not first:
+                    log.debug("waiting 5 seconds before spawning next socket, standby...")
+                    await asyncio.sleep(5)
+                    log.debug("spawning socket, standby...")
                 await sock.connect()
                 await asyncio.sleep(INTERVAL)
                 loop.create_task(sock.run())
+                first = False
+                
             while True:
                 await asyncio.sleep(INTERVAL)                
                 if (datetime.now() - self.__last_load_check).seconds > INTERVAL_LOAD_BALANCE:

@@ -107,8 +107,9 @@ class Socket():
     async def reconnect(self):
         self.log.info(f"Reconnect detected!")
         await self.disconnect()
-        self.log.info(f"Waiting to reconnect.")
+        self.log.info(f"Waiting 10s to reconnect.")
         await asyncio.sleep(10)
+        self.log.info(f"Reconnecting, standby...")
         await self.connect()
 
 
@@ -194,16 +195,16 @@ class Socket():
         try:
             self.buffer += (await self.reader.readline()).decode()
             # self.buffer = self.buffer + (await self.loop.sock_recv(self.socket, 1024)).decode()
-        except ConnectionAbortedError:
-            self.log.info(f"Socket connection has Closed")
+        except ConnectionAbortedError as e:
+            self.log.info(f"Socket connection has Closed\nDetails below\n{type(e)}: {traceback.format_exc()}")
             if self.active:
                 await self.reconnect()
-        except UnicodeDecodeError:
-            self.log.warning(f"Unicode Decode error detected, possible issue with the buffer.\nBuffer: [{self.buffer}]\n\nRegenerating buffer...")
+        except UnicodeDecodeError as e:
+            self.log.warning(f"Unicode Decode error detected, possible issue with the buffer.\nBuffer: [{self.buffer}]\n\nDetails below\n{type(e)}: {traceback.format_exc()}\n\nRegenerating buffer...")
             self.buffer = ""
             self.log.info(f"Buffer regeneration completed.")
-        except OSError:
-            self.log.warning(f"OSError detected, socket issue identitfied. Attempting to recover socket.")
+        except OSError as e:
+            self.log.warning(f"OSError detected, socket issue identitfied. Attempting to recover socket. Details below\n{type(e)}: {traceback.format_exc()}")
             if self.active:
                 await self.reconnect()
 
