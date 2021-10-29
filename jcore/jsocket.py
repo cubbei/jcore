@@ -58,6 +58,17 @@ class Socket():
     @property
     def message_counter(self) -> dict:
         return self.__message_counter
+    
+    @property
+    def total_messages(self) -> int:
+        m = 0
+        for k,v in self.__message_counter.items():
+            m += v
+        return m
+    
+    @property
+    def average_messages(self) -> float:
+        return float(self.total_messages) / float(self.current_connections)
 
     @property
     def current_connections(self) -> int:
@@ -65,6 +76,7 @@ class Socket():
 
 
     async def connect(self):
+        self.active = True
         if len(self.__channels) == 0: 
             raise Exception("Channels list hasn't been set.")
         self.log.info(f"Initialising connection to: {self.__channels}")
@@ -91,7 +103,8 @@ class Socket():
             try:
                 tasks = []
                 for channel in self.__channels:
-                    tasks.append(self._part(channel))
+                    if self.writer:
+                        tasks.append(self._part(channel))
                 asyncio.gather(*tasks, loop=self.loop)
             except Exception as e:
                 self.log.critical(f"Suppressing a caught an exception in `Socket.disconnect()` [Parting channel]. Details below\n{type(e)}: {traceback.format_exc()}")
@@ -193,7 +206,11 @@ class Socket():
         if not self.active:
             return
         try:
-            self.buffer += (await self.reader.readline()).decode()
+            if self.reader.at_eof():
+                self.log.warn("recieved EOF from server, will attempt to reconnect socket. Standby...")
+                await self.reconnect()
+            else:
+                self.buffer += (await self.reader.readline()).decode()
             # self.buffer = self.buffer + (await self.loop.sock_recv(self.socket, 1024)).decode()
         except ConnectionAbortedError as e:
             self.log.info(f"Socket connection has Closed\nDetails below\n{type(e)}: {traceback.format_exc()}")

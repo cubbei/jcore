@@ -129,7 +129,7 @@ class Client():
                 loop = asyncio.get_event_loop()
                 loop.create_task(new_sock.run())
                 await sock.depart_channel(largest_channel_name)
-            elif ratio == 0 and sock.current_connections == 1:
+            elif ratio == 0 and sock.current_connections == 1 and len(self.sockets) > 1:
                 log.info(f"Socket [{sock.name}] LB: consolidating socket")
                 await self.remove_socket_and_close(sock)
                 await self.join_channel(largest_channel_name)
