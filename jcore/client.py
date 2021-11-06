@@ -52,11 +52,24 @@ class Client():
             for chn in channels:
                 if chn not in channel_list:
                     channel_list.append(chn)
+
+        # check for bot's own channel in channel list, and add to start. 
+        nick = settings.get_setting("nick")
+        if nick not in channel_list:
+            channel_list.insert(nick)
+        else:
+            # reorder position of nick in channel list to ensure it is present in the 
+            # primary socket.
+            channel_list.remove(nick)
+            channel_list.insert(nick)
+
         
         self.loop = asyncio.get_event_loop()
         self.loop.set_exception_handler(self.handle_exception)
+        primary_socket = True
         for segment in self.__segment_channels(channel_list):
-            self.append_new_socket(segment)
+            self.append_new_socket(segment, primary_socket)
+            primary_socket = False
         self.__cache_modules()
 
     def handle_exception(self, loop, context):
@@ -89,8 +102,8 @@ class Client():
             for sock in self.sockets:
                 sock.disconnect()
 
-    def append_new_socket(self, channel_list:list):
-        sock = jcore.jsocket.Socket(self, self.command_activator)
+    def append_new_socket(self, channel_list:list, primary_socket: bool = False):
+        sock = jcore.jsocket.Socket(self, self.command_activator, primary_socket)
         sock.set_channels(channel_list)
         self.sockets.append(sock)
         return sock
@@ -129,20 +142,12 @@ class Client():
                 loop = asyncio.get_event_loop()
                 loop.create_task(new_sock.run())
                 await sock.depart_channel(largest_channel_name)
-            elif ratio == 0 and sock.current_connections == 1 and len(self.sockets) > 1:
+            elif ratio == 0 and sock.current_connections == 1 and len(self.sockets) > 1 and not sock.primary_socket:
                 log.info(f"Socket [{sock.name}] LB: consolidating socket")
                 await self.remove_socket_and_close(sock)
                 await self.join_channel(largest_channel_name)
             sock.reset_message_counter()
             await asyncio.sleep(INTERVAL)
-
-                
-
-
-
-
-    
-
 
     async def join_channel(self, channel):
         socket: jcore.jsocket.Socket

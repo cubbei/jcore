@@ -23,11 +23,12 @@ class Socket():
     and customised to facilitate communication with the Twitch IRC API."""
     __message_counter:dict
     last_check:datetime
+    primary_socket: bool
     log:logging
     reader: StreamReader
     writer: StreamWriter
 
-    def __init__(self, client, command_activator: str):
+    def __init__(self, client, command_activator: str, primary_socket:bool = False):
         self.__name = uuid.uuid4().hex[:8]
         self.log = logging.getLogger(f"{__name__} [{self.__name}]")
         self.client = client
@@ -42,6 +43,7 @@ class Socket():
         self.loop = asyncio.get_event_loop()
         self.__message_counter = {}
         self.last_check = datetime.now()
+        self.primary_socket = primary_socket
 
     def set_channels(self, channels: list):
         self.__channels = channels
@@ -281,7 +283,7 @@ class Socket():
         elif message.inner == "RaidUserNotice":
             self.loop.create_task(self.client._scb_on_raid_usernotice(message))
             self.__message_counter[message.channel] += 1
-        elif message.inner == "Whisper":
+        elif message.inner == "Whisper" and self.primary_socket:
             self.log.info(f"[WHISPER]: ({message.display_name}) {message.message_text}")
             self.loop.create_task(self.client._scb_on_whisper(message))
             self.__message_counter[message.channel] += 1
