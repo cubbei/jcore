@@ -159,6 +159,22 @@ class Whisper(RawMessage):
     def __repr__(self):
         return f"[{self.inner}]: {self.display_name} => {self.message_text}"
 
+    async def reply(self, message_text:str):
+        """Send a reply to the user that whispered you.
+
+        Parameters
+        ----------
+            - `message_text` [str]: message to send user
+
+        Raises
+        ------
+            - `MissingRequiredParameterException`
+
+        """
+        if message_text == "" or message_text is None:
+            raise MissingRequiredParameterException("parameter `message_text` is required")
+        await self._send(f"/w {self.display_name.lower()} {message_text}")
+
 
 
 
@@ -538,6 +554,25 @@ Message Text: {self.message_text}
         Required Scope: `channel:moderate`
         """
         await self._unique_chat_off()
+
+    async def whisper(self, user: str,  message_text:str):
+        """Send a whisper to a user.
+
+        Parameters
+        ----------
+            - `user` [str]: username of the user to ban
+            - `message_text` [str]: message to send user
+
+        Raises
+        ------
+            - `MissingRequiredParameterException`
+        
+        """
+        if user == "" or user is None:
+            raise MissingRequiredParameterException("parameter `user` is required")
+        if message_text == "" or message_text is None:
+            raise MissingRequiredParameterException("parameter `message_text` is required")
+        await self._send(f"/w {user.lower()} {message_text}")
 
 
 
