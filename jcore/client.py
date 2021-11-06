@@ -101,7 +101,7 @@ class Client():
         except KeyboardInterrupt:
             log.debug("Keyboard Interrupt Detected - departing channels.")
             for sock in self.sockets:
-                sock.disconnect()
+                await sock.disconnect()
 
     def append_new_socket(self, channel_list:list, primary_socket: bool = False):
         sock = jcore.jsocket.Socket(self, self.command_activator, primary_socket)
