@@ -56,12 +56,13 @@ class Client():
         # check for bot's own channel in channel list, and add to start. 
         nick = settings.get_setting("nick")
         if nick not in channel_list:
-            channel_list.insert(nick)
+            channel_list.insert(0,nick)
         else:
             # reorder position of nick in channel list to ensure it is present in the 
             # primary socket.
             channel_list.remove(nick)
-            channel_list.insert(nick)
+            channel_list.insert(0, nick)
+            
 
         
         self.loop = asyncio.get_event_loop()
