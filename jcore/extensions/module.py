@@ -101,4 +101,8 @@ class Module():
         """Invoked when a CommandMessage message is sent to the bot."""
         pass
 
+    async def on_heartbeat(self): 
+        """Invoked periodically by the bot as a status check."""
+        pass
+
 

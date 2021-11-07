@@ -98,6 +98,7 @@ class Client():
                 if (datetime.now() - self.__last_load_check).seconds > INTERVAL_LOAD_BALANCE:
                     self.__last_load_check = datetime.now()
                     loop.create_task(self.check_load_balance())
+                    loop.create_task(self._ccb_on_heartbeat())
         except KeyboardInterrupt:
             log.debug("Keyboard Interrupt Detected - departing channels.")
             for sock in self.sockets:
@@ -171,6 +172,10 @@ class Client():
 
 
     # Callbacks: These can be overwritten to provide functionality in user-built apps.
+
+    async def on_heartbeat(self):
+        """Invoked periodically by the bot as a status check."""
+        pass
 
     async def on_raw(self, message: RawMessage):
         """Called when a raw message event is received. Triggers in all cases."""
@@ -288,7 +293,19 @@ class Client():
         # not implemented
         pass
     
+    
+    # client Callbacks: These are called by the client and trigger behaviours.
 
+    async def _ccb_on_heartbeat(self):
+        # parse modules and queue tasks
+        for module in self.__get_module_with_handler("on_heartbeat"):
+            try:
+                self.loop.create_task(module.on_heartbeat())
+            except Exception as e:
+                log.exception(f"Suppressing a caught an exception, will continue without raising. Details below\n{type(e)}: {traceback.format_exc()}")
+        # call local callback
+        self.loop.create_task(self.on_heartbeat())
+    
     # jcore.jsocket.Socket Callbacks: These are called by the socket when recieving messages.
 
     async def _scb_on_raw(self, message: RawMessage):
