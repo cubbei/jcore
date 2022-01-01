@@ -280,6 +280,7 @@ def __parse_names(line: str) -> Names:
     msg = Names()
     msg.line = line
     msg.message_time = datetime.now()
+    msg.channel = line.split("#")[1].split(" ")[0].strip()
     return msg
 
 
