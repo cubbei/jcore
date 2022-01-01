@@ -11,7 +11,7 @@ setuptools.setup(
     description="A python package for creating Twitch Bots",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://dev.azure.com/cubbei/jcore",
+    url="https://github.com/cubbei/jcore",
     packages=setuptools.find_packages(),
     install_requires=[
         'asyncio', 'pyyaml'
