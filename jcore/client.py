@@ -161,13 +161,21 @@ class Client():
                 await socket.join_channel(channel)
                 return
         
-        
-
     async def depart_channel(self, channel):
         socket: jcore.jsocket.Socket
         for socket in self.sockets:
             if socket.has_channel(channel):
                 await socket.depart_channel(channel)
+
+    async def send_to_channel(self, channel, message):
+        socket: jcore.jsocket.Socket
+        found = False
+        for socket in self.sockets:
+            if socket.has_channel(channel):
+                found = True
+                await socket.send(channel=channel, message=message)
+        if not found:
+            log.warning(f"Message could not be sent to channel '{channel}'. Check that this channel is still supposed to be connected. \nMessage: {message}")
         
 
 
