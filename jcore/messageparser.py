@@ -205,6 +205,7 @@ def __parse_privatemessage(line: str, command_activator: str) -> PrivateMessage:
     if t[0] == command_activator:
         msg = CommandMessage()
         msg.args = t[1:].lower().split(" ")
+        msg.args_len = len(msg.args)
         msg.KEYWORD = msg.args[0].strip("\"\'\\")
     else:
         msg = PrivateMessage()

@@ -727,6 +727,7 @@ class CommandMessage(PrivateMessage):
     KEYWORD: str
     args: list    
     inner: str = "CommandMessage"
+    args_len: int
     
 
     def __repr__(self):
