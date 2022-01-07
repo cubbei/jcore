@@ -16,7 +16,7 @@ executor = ProcessPoolExecutor(2)
 
 
 INTERVAL = 0.001
-
+JOIN_LIMIT = 10
 
 class Socket():
     """A wrapper for the low-level core library socket interface, 
@@ -117,7 +117,13 @@ class Socket():
         await self._send_raw("CAP REQ :twitch.tv/membership")
         await self._send_raw("CAP REQ :twitch.tv/tags")
         await self._send_raw("CAP REQ :twitch.tv/commands")
+
+        counter = 0
+
         for channel in self.__channels:
+            if counter % JOIN_LIMIT == 0:
+                await asyncio.sleep(5)
+                self.log.debug("Pausing join requests, standby...")
             await self._join(channel)
             self.__message_counter[channel] = 0
         self.last_ping = datetime.now()
