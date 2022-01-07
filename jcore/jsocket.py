@@ -34,7 +34,8 @@ class Socket():
         self.client = client
         self.command_activator = command_activator
         self.active = True
-        self.__channels = []
+        self.__channels = {}
+
         self.buffer = ""
         # self.socket = None
         config = Settings().get_all_settings()
@@ -46,11 +47,13 @@ class Socket():
         self.primary_socket = primary_socket
 
     def set_channels(self, channels: list):
-        self.__channels = channels
+        for channel in channels:
+            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0}
+        
 
     def reset_message_counter(self):
         for channel in self.__channels:
-            self.__message_counter[channel] = 0
+            self.__channels[channel]["message_counter"] = 0
         self.last_check = datetime.now()
     
     @property
@@ -58,14 +61,25 @@ class Socket():
         return self.__name
 
     @property
+    def channel_list(self) -> list:
+        outlist= []
+        for key in self.__channels:
+            outlist.append(key)
+        return outlist
+        
+
+    @property
     def message_counter(self) -> dict:
-        return self.__message_counter
+        outdict = {}
+        for key, values in self.__channels.items():
+            outdict[key] = values["message_counter"]
+        return outdict
     
     @property
     def total_messages(self) -> int:
         m = 0
-        for k,v in self.__message_counter.items():
-            m += v
+        for k,v in self.__channels.items():
+            m += v["message_counter"]
         return m
     
     @property
@@ -137,13 +151,13 @@ class Socket():
     async def join_channel(self, channel):
         self.log.info(f"Sending request to join channel `{channel}`")
         try:
-            self.__channels.append(channel)
-            self.__message_counter[channel] = 0
+            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0}
             await self._join(channel)
+            await asyncio.sleep(2)
         except JarvisException as ex:
             self.log.error(f"An error occurred when attemting to leave the channel `{channel}`\nDetails below\n{type(ex)}: {traceback.format_exc()}")
             return
-        if channel in self.__channels:
+        if self.__channels[channel]["active"]:
             self.log.info(f"Successfully joined channel `{channel}`")
         else:
             self.log.warning(f"There was an issue adding the channel `{channel}`, check the logs for any further details.")
@@ -165,8 +179,15 @@ class Socket():
 
 
     def has_channel(self, channel) -> bool:
-        return channel in self.__channels
+        return channel in self.__channels 
 
+    
+    async def health_check(self):
+        for channel, values in self.__channels.items():
+            if not values["active"] and values["activation_failures"] < 5:
+                self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
+                await self._join(channel)
+                values["activation_failures"] += 1
 
 
     async def send(self, channel: str, message: str):
@@ -202,7 +223,9 @@ class Socket():
                 await self.disconnect()
 
 
-
+    def __activate_channel(self, channel):
+        self.__channels[channel]["active"] = True
+        self.__channels[channel]["activation_failures"] = 0
 
     async def __process_stream_message(self):
         if not self.active:
@@ -250,6 +273,7 @@ class Socket():
         elif message.inner == "Mode":
             self.loop.create_task(self.client._scb_on_mode(message))
         elif message.inner == "Names":
+            self.__activate_channel(message.channel)
             self.loop.create_task(self.client._scb_on_names(message))
         elif message.inner == "Part":
             self.loop.create_task(self.client._scb_on_part(message))
