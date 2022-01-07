@@ -306,6 +306,9 @@ class Socket():
         elif message.inner == "HostTarget":
             self.loop.create_task(self.client._scb_on_hosttarget(message))
         elif message.inner == "Notice":
+            if message.message_id == "msg_channel_suspended":
+                self.__channels[message.channel]["activation_failures"] = 1000
+                self.log.warn(f"Channel `{message.channel}` has been deleted or deactivated, a connection will not be retried. Please remove this channel from your channel list.")
             self.loop.create_task(self.client._scb_on_notice(message))
         elif message.inner == "Reconnect":
             self.loop.create_task(self.client._scb_on_reconnect(message))
