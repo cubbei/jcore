@@ -178,8 +178,7 @@ class Socket():
     async def depart_channel(self, channel):
         self.log.info(f"Sending request to leave channel `{channel}`")
         try:
-            self.__channels.remove(channel)
-            self.__message_counter.pop(channel)
+            self.__channels.pop(channel)
             await self._part(channel)
         except JarvisException as ex:
             self.log.error(f"An error occurred when attemting to leave the channel `{channel}`\nDetails below\n{type(ex)}: {traceback.format_exc()}")
