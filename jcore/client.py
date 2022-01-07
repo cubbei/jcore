@@ -12,6 +12,7 @@ import traceback
 
 INTERVAL = 0.001
 INTERVAL_LOAD_BALANCE = 20
+INTERVAL_INACTIVE_CHANNELS = 120
 
 
 log = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class Client():
         self.sockets = []
         self.__modules = {}
         self.__last_load_check = datetime.now()
+        self.__last_inactive_channels_check = datetime.now()
         self.load_ratio = load_ratio
         
         # pull channels from settings file.
@@ -99,6 +101,8 @@ class Client():
                     self.__last_load_check = datetime.now()
                     loop.create_task(self.check_load_balance())
                     loop.create_task(self._ccb_on_heartbeat())
+                if (datetime.now() - self.__last_inactive_channels_check).seconds > INTERVAL_LOAD_BALANCE:
+                    loop.create_task(self.clear_inactive_channels())
         except KeyboardInterrupt:
             log.debug("Keyboard Interrupt Detected - departing channels.")
             for sock in self.sockets:
@@ -150,11 +154,14 @@ class Client():
                 await self.join_channel(largest_channel_name)
             sock.reset_message_counter()
             await asyncio.sleep(INTERVAL)
+            
+
+    async def clear_inactive_channels(self):
+        for sock in self.sockets:
             if sock.has_inactive_connections:
                 log.info("Checking socket connections health")
                 await sock.health_check()
                 await asyncio.sleep(INTERVAL)
-
 
     async def join_channel(self, channel):
         socket: jcore.jsocket.Socket
