@@ -237,6 +237,9 @@ class Socket():
             self.writer.write((f"{message}\r\n").encode('utf-8'))
             # self.socket.send((f"{message}\r\n").encode('utf-8'))
             await asyncio.sleep(INTERVAL)
+        except BrokenPipeError:
+            self.log.critical(f"Broken pipe identified. Triggering reconnection '{message}'")
+            await self.reconnect()
         except OSError:
             self.log.critical(f"Socket is closed and must be reopened to send the message '{message}'")
 
