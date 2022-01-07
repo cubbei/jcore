@@ -199,6 +199,7 @@ class Socket():
                 self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
                 await self._join(channel)
                 values["activation_failures"] += 1
+                return
 
 
     async def send(self, channel: str, message: str):

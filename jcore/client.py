@@ -157,6 +157,7 @@ class Client():
             
 
     async def clear_inactive_channels(self):
+        self.__last_inactive_channels_check = datetime.now()
         for sock in self.sockets:
             if sock.has_inactive_connections:
                 log.info("Checking socket connections health")
