@@ -51,6 +51,10 @@ def parse_line(line: str, command_activator: str) -> RawMessage:
     if pattern.search(line): #user state
         return __parse_whisper(line)
 
+    pattern = re.compile(".tmi.twitch.tv NOTICE")
+    if pattern.search(line): #user state
+        return __parse_notice(line)
+
 
 
 
@@ -74,6 +78,13 @@ def __parse_whisper(line:str) -> Whisper:
     msg.channel = __get_whisper_channel(line)
     return msg
 
+def __parse_notice(line: str) -> Notice:
+    msg = Notice()
+    msg.line = line
+    msg.message_time = datetime.now()
+    msg.channel = __get_channel(line, "NOTICE")
+    msg.message_id = str(line.split("msg-id=")[1]).split(" ")[0]
+    return msg
 
 def __parse_userstate(line: str) -> UserState:
     msg = UserState()
