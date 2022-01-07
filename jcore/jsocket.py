@@ -89,6 +89,18 @@ class Socket():
     @property
     def current_connections(self) -> int:
         return len(self.__channels)
+    
+    @property
+    def inactive_connections(self) -> list:
+        outlist = []
+        for channel, values in self.__channels.items():
+            if not values["active"]:
+                outlist.append(channel)
+        return outlist
+
+    @property
+    def has_inactive_connections(self) -> bool:
+        return len(self.inactive_connections) > 0
 
 
     async def connect(self):
@@ -184,7 +196,7 @@ class Socket():
     
     async def health_check(self):
         for channel, values in self.__channels.items():
-            if not values["active"] and values["activation_failures"] < 5:
+            if not values["active"] and values["activation_failures"] < 3:
                 self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
                 await self._join(channel)
                 values["activation_failures"] += 1

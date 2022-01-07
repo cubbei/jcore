@@ -150,9 +150,10 @@ class Client():
                 await self.join_channel(largest_channel_name)
             sock.reset_message_counter()
             await asyncio.sleep(INTERVAL)
-            log.info("Checking socket connections health")
-            await sock.health_check()
-            await asyncio.sleep(INTERVAL)
+            if sock.has_inactive_connections:
+                log.info("Checking socket connections health")
+                await sock.health_check()
+                await asyncio.sleep(INTERVAL)
 
 
     async def join_channel(self, channel):
