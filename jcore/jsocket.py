@@ -194,12 +194,16 @@ class Socket():
 
     
     async def health_check(self):
+        counter_limit = 3
+        counter = 0
         for channel, values in self.__channels.items():
             if not values["active"] and values["activation_failures"] < 3:
                 self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
                 await self._join(channel)
                 values["activation_failures"] += 1
-                return
+                counter += 1
+                if counter > counter_limit:
+                    return
 
 
     async def send(self, channel: str, message: str):
