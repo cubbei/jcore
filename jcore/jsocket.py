@@ -48,7 +48,7 @@ class Socket():
 
     def set_channels(self, channels: list):
         for channel in channels:
-            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0}
+            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0, "banned": False}
         
 
     def reset_message_counter(self):
@@ -95,6 +95,14 @@ class Socket():
         outlist = []
         for channel, values in self.__channels.items():
             if not values["active"]:
+                outlist.append(channel)
+        return outlist
+
+    @property
+    def banned_channels(self) -> list:
+        outlist = []
+        for channel, values in self.__channels.items():
+            if values["banned"]:
                 outlist.append(channel)
         return outlist
 
@@ -170,7 +178,7 @@ class Socket():
     async def join_channel(self, channel):
         self.log.info(f"Sending request to join channel `{channel}`")
         try:
-            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0}
+            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0, "banned": False}
             await self._join(channel)
             await asyncio.sleep(2)
         except JarvisException as ex:
@@ -205,8 +213,11 @@ class Socket():
         counter = 0
         for channel, values in self.__channels.items():
             if not values["active"] and values["activation_failures"] < 3:
-                self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
-                await self._join(channel)
+                if not values["banned"]:
+                    self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
+                    await self._join(channel)
+                else:
+                    self.log.warn(f"You're banned from channel `{channel}` - will not reinitiate connected to this channel.")
                 values["activation_failures"] += 1
                 counter += 1
                 if counter > counter_limit:
@@ -310,6 +321,9 @@ class Socket():
             if message.message_id == "msg_channel_suspended":
                 self.__channels[message.channel]["activation_failures"] = 1000
                 self.log.warn(f"Channel `{message.channel}` has been deleted or deactivated, a connection will not be retried. Please remove this channel from your channel list.")
+            if message.message_id == "msg_banned":
+                self.__channels[message.channel]["banned"] = True
+                self.log.warn(f"Channel `{message.channel}` has banned you. Please remove this channel from your channel list.")
             self.loop.create_task(self.client._scb_on_notice(message))
         elif message.inner == "Reconnect":
             self.loop.create_task(self.client._scb_on_reconnect(message))
