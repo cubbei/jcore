@@ -122,8 +122,8 @@ class Socket():
 
         for channel in self.__channels:
             if counter % JOIN_LIMIT == 0:
-                await asyncio.sleep(5)
                 self.log.debug("Pausing join requests, standby...")
+                await asyncio.sleep(5)
             counter += 1
             await self._join(channel)
             self.__message_counter[channel] = 0
