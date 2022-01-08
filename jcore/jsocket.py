@@ -115,7 +115,7 @@ class Socket():
         self.active = True
         if len(self.__channels) == 0: 
             raise Exception("Channels list hasn't been set.")
-        self.log.info(f"Initialising connection to: {self.__channels}")
+        self.log.info(f"Initialising connection to: {self.channel_list}")
         # self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.reader,self.writer = await asyncio.open_connection(host="irc.chat.twitch.tv", port=6667)
         
@@ -178,7 +178,7 @@ class Socket():
     async def join_channel(self, channel):
         self.log.info(f"Sending request to join channel `{channel}`")
         try:
-            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 0, "banned": False}
+            self.__channels[channel] = {"active": False, "message_counter": 0, "activation_failures": 3, "banned": False}
             await self._join(channel)
             await asyncio.sleep(2)
         except JarvisException as ex:
@@ -215,6 +215,7 @@ class Socket():
             if not values["active"] and values["activation_failures"] < 3:
                 if not values["banned"]:
                     self.log.warn(f"Channel `{channel}` was found to be inactive. resending join request.")
+                    await self._part(channel)
                     await self._join(channel)
                 else:
                     self.log.warn(f"You're banned from channel `{channel}` - will not reinitiate connected to this channel.")
