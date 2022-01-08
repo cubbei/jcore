@@ -1,6 +1,6 @@
 # J-Core
 
-[![Build status](https://dev.azure.com/cubbei/JCore/_apis/build/status/Publish%20jcore)](https://dev.azure.com/cubbei/JCore/_build/latest?definitionId=7) | [![PyPI version](https://badge.fury.io/py/jcore@2x.svg)](https://badge.fury.io/py/jcore) | [![Python Version](https://img.shields.io/badge/Python%20Version-3.7%20%7C%203.8%20%7C%203.9-brightgreen)](https://python.org) | [![Top Language](https://img.shields.io/github/languages/top/cubbei/jcore)](https://github.com/cubbei/jcore)
+[![Python Version](https://img.shields.io/badge/Python%20Version-3.7%20%7C%203.8%20%7C%203.9-brightgreen)](https://python.org)    [![PyPI version](https://badge.fury.io/py/jcore@2x.svg)](https://badge.fury.io/py/jcore)
 
 This framework is a simple wrapper for creating [Twitch](https://twitch.tv) bots using Python. 
 The [Jarvis chatbot for twitch and discord](https://jarvis.bot) has been built using the J-Core framework for it's Twitch components. 
@@ -10,8 +10,8 @@ A full set of documentation is still being developed, however, a getting started
 ## Getting started
 
 ### Prerequisites
-To get started creating a bot using the J-Core framwork is pretty simple, but it does require that you have [Python](https://python.org) installed on your computer. 
-Some operating systems come with python pre-installed (e.g. MacOS and most Linux systems), but if you're on Windows, you will need to [download Python](https://python.org/download) first to create a bot.
+To get started creating a bot using the J-Core framwork is pretty simple, but it does require that you have [Python](https://python.org) installed on your computer.  
+Some operating systems come with python pre-installed (e.g. MacOS and most Linux systems), but if you're on Windows, you will need to [download Python](https://python.org/download) first to create a bot.  
 Once you have installed Python, you can use `pip` to install the J-Core framework and start creating your first bot.
 
 ### Installation
