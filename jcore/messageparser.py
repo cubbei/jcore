@@ -249,7 +249,7 @@ def __parse_roomstate(line: str) -> RoomState:
     msg.emote_only = "1" == __get_single(line, "emote-only")
     msg.follower_only = __get_single_int(line, "followers-only", default = -1) > -1
     msg.r9k = "1" == __get_single(line, "r9k")
-    msg.slow = __get_single_int(line, "slow", default = -1)
+    msg.slow = __get_single_int(line, "slow", default = -1, end=" ")
     msg.subs_only = "1" == __get_single(line, "subs-only")
     return msg
 
@@ -298,22 +298,22 @@ def __parse_names(line: str) -> Names:
 
 # Helper Methods
 
-def __get_single_int(line: str, key: str, default: int = 0) -> int:
+def __get_single_int(line: str, key: str, default: int = 0, end=";") -> int:
     target = __get_single(line, key)
     if target is None:
         return default
     else:
         return int(target)
 
-def __get_single(line: str, key:str) -> str:
+def __get_single(line: str, key:str, end=";") -> str:
     try:
-        return line.split(f"{key}=")[1].split(";")[0]
+        return line.split(f"{key}=")[1].split(end)[0]
     except IndexError:
         return None
 
-def __get_list(line: str, key:str) -> list:
+def __get_list(line: str, key:str, end=";") -> list:
     try:
-        return line.split(f"{key}=")[1].split(";")[0].split(",")
+        return line.split(f"{key}=")[1].split(end)[0].split(",")
     except IndexError:
         return None
 
