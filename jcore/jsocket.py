@@ -265,6 +265,13 @@ class Socket():
         self.__channels[channel]["active"] = True
         self.__channels[channel]["activation_failures"] = 0
 
+    def __increment_message_counter(self, channel):
+        if channel in self.__message_counter.keys():
+            self.__message_counter[channel] += 1
+        else:
+            self.log.warn(f"Channel: `{channel}` attempted to increment the message counter, but channel cannot be found in the messagelist. Adding new entry.")
+            self.__message_counter[channel] = 1
+
     async def __process_stream_message(self):
         if not self.active:
             return
@@ -335,43 +342,43 @@ class Socket():
             self.loop.create_task(self.client._scb_on_roomstate(message))
         elif message.inner == "UserState":
             self.loop.create_task(self.client._scb_on_userstate(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "GlobalUserState":
             self.loop.create_task(self.client._scb_on_globaluserstate(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "UserNotice":
             self.loop.create_task(self.client._scb_on_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "RitualUserNotice":
             self.loop.create_task(self.client._scb_on_ritual_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "BitBadgeUpgradeUserNotice":
             self.loop.create_task(self.client._scb_on_bitbadgeupgrade_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "RaidUserNotice":
             self.loop.create_task(self.client._scb_on_raid_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "Whisper" and self.primary_socket:
             self.log.info(f"[WHISPER]: ({message.display_name}) {message.message_text}")
             self.loop.create_task(self.client._scb_on_whisper(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "SubscriberUserNotice":
             if message.display_name.lower() != self.nick.lower():
                 self.loop.create_task(self.client._scb_on_subscriber_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "GiftedSubscriberUserNotice":
             if message.display_name.lower() != self.nick.lower():
                 self.loop.create_task(self.client._scb_on_giftedsubscriber_usernotice(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "PrivateMessage":
             if message.display_name.lower() != self.nick.lower():
                 self.log.info(f"[CHAT].[{message.channel}]: ({message.display_name}) {message.message_text}")
                 self.loop.create_task(self.client._scb_on_privmessage(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         elif message.inner == "CommandMessage":
             if message.display_name.lower() != self.nick.lower():
                 self.log.info(f"[CMD].[{message.channel}]: ({message.display_name}) {message.message_text}")
                 self.loop.create_task(self.client._scb_on_command(message))
-            self.__message_counter[message.channel] += 1
+            self.__increment_message_counter(message.channel)
         await asyncio.sleep(INTERVAL)
         
